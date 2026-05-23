@@ -7,6 +7,7 @@ import locationRoutes from '../src/routes/location.routes.js';
 import categoriasRoutes from '../src/routes/categories.routes.js';
 import settingsRoutes from '../src/routes/settings.routes.js';
 import tablesRoutes from '../src/routes/tables.routes.js';
+import orderRoutes from '../src/routes/order.routes.js';
 
 const app = express();
 
@@ -20,5 +21,6 @@ app.use('/api/locations', locationRoutes);
 app.use('/api/categorias', categoriasRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/tables', tablesRoutes);
+app.use('/api/pedidos', orderRoutes);
 
 export default app;
