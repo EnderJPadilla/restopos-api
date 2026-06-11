@@ -1,7 +1,11 @@
+import fs from "fs";
+import { guardarImagenBase64 } from "../utils/image.helper.js";
 import { getProducts, newProducts, updateProduct, ProductDisponible, deleteProduct } from '../services/produts.service.js';
 
 export const getProductos = async (req, res) => {
-  const { empresa_id } = req.body;
+  // const { empresa_id } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando Listar productos.');
   console.log('----------------------------------------');
@@ -22,10 +26,17 @@ export const getProductos = async (req, res) => {
     }
 
     console.log('Productos Listados.');
+    // console.log('Productos Listados:', products.data);
     console.log('----------------------------------------');
-    return res.json({
-      productos: products
-    });
+    // return res.json({
+    //   productos: products
+    // });
+    // return res.json(
+    //   products
+    // );
+    return res.json(
+      products
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -37,21 +48,21 @@ export const getProductos = async (req, res) => {
 };
 
 export const newProductos = async (req, res) => {
-  const { empresa_id, dataProducto } = req.body;
+  const { dataProducto } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando Crear producto.');
   console.log('----------------------------------------');
-  console.log('Data Producto:', dataProducto);
-  console.log('----------------------------------------');
 
   try {
-    if (!empresa_id || !dataProducto) {
+    if (!empresa_id || !idUsuario || !dataProducto) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
     }
 
-    const products = await newProducts(empresa_id, dataProducto);
+    const products = await newProducts(empresa_id, idUsuario, dataProducto);
 
     if (!products) {
       return res.status(401).json({
@@ -61,9 +72,9 @@ export const newProductos = async (req, res) => {
     
     console.log('Producto registrado con exito.')
     console.log('----------------------------------------');
-    return res.json({
-      products: products
-    });
+    return res.json(
+      products.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -75,7 +86,9 @@ export const newProductos = async (req, res) => {
 };
 
 export const productoDisponible = async (req, res) => {
-  const { empresa_id, producto_id, disponible } = req.body;
+  const { producto_id, disponible } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando Disponibilidad de producto.');
   console.log('----------------------------------------');
@@ -87,7 +100,7 @@ export const productoDisponible = async (req, res) => {
       });
     }
 
-    const producto = await ProductDisponible(empresa_id, producto_id, disponible);
+    const producto = await ProductDisponible(empresa_id, idUsuario, producto_id, disponible);
 
     if (!producto) {
       return res.status(401).json({
@@ -97,9 +110,9 @@ export const productoDisponible = async (req, res) => {
 
     console.log('Producto actualizado disponibilidad.');
     console.log('----------------------------------------');
-    return res.json({
-      producto: producto
-    });
+    return res.json(
+      producto.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -111,22 +124,21 @@ export const productoDisponible = async (req, res) => {
 };
 
 export const uploadProductos = async (req, res) => {
-  const { empresa_id, dataProducto } = req.body;
+  const { dataProducto } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando Actualizar Producto.');
   console.log('----------------------------------------');
-  // console.log('Empresa: '+empresa_id);
-  // console.log('DataProducto: '+dataProducto['producto']);
-  // console.log('----------------------------------------');
 
   try {
-    if (!empresa_id || !dataProducto) {
+    if (!empresa_id || !idUsuario || !dataProducto) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
     }
 
-    const producto = await updateProduct(empresa_id, dataProducto);
+    const producto = await updateProduct(empresa_id, idUsuario, dataProducto);
 
     if (!producto) {
       return res.status(401).json({
@@ -136,9 +148,9 @@ export const uploadProductos = async (req, res) => {
 
     console.log('Producto actualizado con exito.')
     console.log('----------------------------------------');
-    return res.json({
-      producto: producto
-    });
+    return res.json(
+      producto.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -150,31 +162,33 @@ export const uploadProductos = async (req, res) => {
 };
 
 export const deleteProductos = async (req, res) => {
-  const { empresa_id, producto_id } = req.body;
+  const { producto_id } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
-  console.log('Ejecutando Disponibilidad de producto.');
+  console.log('Ejecutando Eliminar Producto.');
   console.log('----------------------------------------');
 
   try {
-    if (!empresa_id || !producto_id) {
+    if (!empresa_id || !idUsuario || !producto_id) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
     }
 
-    const producto = await deleteProduct(empresa_id, producto_id);
+    const producto = await deleteProduct(empresa_id, idUsuario, producto_id);
 
     if (!producto) {
       return res.status(401).json({
-        message: 'Error al actualizar la disponibilidad del producto.',
+        message: 'Error al eliminar el producto.',
       });
     }
 
     console.log('Producto Eliminado.');
     console.log('----------------------------------------');
-    return res.json({
-      producto: producto
-    });
+    return res.json(
+      producto.response
+    );
 
   } catch (error) {
     console.error(error.message);

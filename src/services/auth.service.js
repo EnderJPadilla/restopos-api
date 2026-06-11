@@ -36,16 +36,19 @@ export const getValidateUserForAuth = async (usuario) => {
 };
 
 
-export const getUserForAuth = async (usuario, empresaId) => {
+// export const getUserForAuth = async (usuario, empresaId) => {
+export const getUserForAuth = async (usuario) => {
 
-  if (!usuario || !empresaId) {
+  // if (!usuario || !empresaId) {
+  if (!usuario) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'SELECT * FROM sp_outh($1, $2)',
-      [usuario, empresaId]
+      // 'SELECT * FROM sp_outh($1, $2)',
+      'SELECT * FROM sp_outh($1)',
+      [usuario]
     );
 
     // El SP debería retornar máximo 1 registro

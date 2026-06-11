@@ -7,8 +7,12 @@ export const getProducts = async (idEmpresa) => {
   }
 
   try {
+    // const { rows, rowCount } = await pool.query(
+    //   'SELECT * FROM sp_listar_productos($1) AS data',
+    //   [idEmpresa]
+    // );
     const { rows, rowCount } = await pool.query(
-      'SELECT * FROM sp_listar_productos($1) AS data',
+      'SELECT fn_productos_listar($1) AS response',
       [idEmpresa]
     );
 
@@ -16,8 +20,8 @@ export const getProducts = async (idEmpresa) => {
     if (rowCount > 1) {
       throw new Error('RESPUESTA_INCONSISTENTE_SP');
     }
-
-    return rows[0] || null;
+    
+    return rows[0].response || null;
     
   } catch (error) {
     // Error lanzado explícitamente desde PostgreSQL
@@ -36,16 +40,16 @@ export const getProducts = async (idEmpresa) => {
   }
 };
 
-export const newProducts = async (idEmpresa, dataProduct) => {
+export const newProducts = async (idEmpresa, idUsuario, dataProduct) => {
 
-  if (!idEmpresa || !dataProduct) {
+  if (!idEmpresa || !idUsuario || !dataProduct) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_crear_producto($1, $2, NULL, NULL)',
-      [idEmpresa, dataProduct]
+      'SELECT fn_producto_guardar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataProduct]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -72,16 +76,16 @@ export const newProducts = async (idEmpresa, dataProduct) => {
   }
 };
 
-export const ProductDisponible = async (idEmpresa, producto_id, disponible) => {
+export const ProductDisponible = async (idEmpresa, idUsuario, producto_id, disponible) => {
 
-  if (!idEmpresa || !producto_id || disponible === undefined) {
+  if (!idEmpresa || !idUsuario || !producto_id || disponible === undefined) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_producto_disponible($1, $2, $3, NULL)',
-      [idEmpresa, producto_id, disponible]
+      'SELECT fn_producto_disponibilidad($1, $2, $3, $4) AS response',
+      [idEmpresa, idUsuario, producto_id, disponible]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -108,16 +112,16 @@ export const ProductDisponible = async (idEmpresa, producto_id, disponible) => {
   }
 };
 
-export const updateProduct = async (idEmpresa, dataProduct) => {
+export const updateProduct = async (idEmpresa, idUsuario, dataProduct) => {
 
-  if (!idEmpresa || !dataProduct) {
+  if (!idEmpresa || !idUsuario || !dataProduct) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_actualizar_producto($1, $2, NULL)',
-      [idEmpresa, dataProduct]
+      'SELECT fn_producto_actualizar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataProduct]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -144,16 +148,16 @@ export const updateProduct = async (idEmpresa, dataProduct) => {
   }
 };
 
-export const deleteProduct = async (idEmpresa, producto_id) => {
+export const deleteProduct = async (idEmpresa, idUsuario, producto_id) => {
 
-  if (!idEmpresa || !producto_id) {
+  if (!idEmpresa || !idUsuario || !producto_id) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_eliminar_producto($1, $2, NULL)',
-      [idEmpresa, producto_id]
+      'SELECT fn_producto_eliminar($1, $2, $3) AS response',
+      [idEmpresa, producto_id, idUsuario]
     );
 
     // El SP debería retornar máximo 1 registro

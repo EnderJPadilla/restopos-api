@@ -1,60 +1,65 @@
 import jwt from 'jsonwebtoken';
-import pool from '../config/database.js';
+import { validateTokenBD } from '../services/token.service.js';
 
 export const authMiddleware = async (req, res, next) => {
-  try {
-    console.log('Ejecutando Middleware de autenticación.');
-    console.log('----------------------------------------');
 
-    const authHeader = req.headers['authorization'];
+  try {
+    const authHeader = req.headers.authorization;
 
     if (!authHeader) {
-      return res.status(401).json({ message: 'Token no enviado' });
+      return res.status(401).json({
+        success: false,
+        message: 'Token no enviado'
+      });
     }
 
     const token = authHeader.split(' ')[1];
 
     if (!token) {
-      return res.status(401).json({ message: 'Token inválido' });
+      return res.status(401).json({
+        success: false,
+        message: 'Token inválido'
+      });
     }
 
-    // Verificar JWT
+    //------------------------------------------------
+    // VALIDACIÓN LOCAL JWT
+    //------------------------------------------------
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // console.log('Token verificado. Usuario ID:', decoded.user_id, 'Empresa ID:', decoded.empresa_id);
-    console.log('Validando token en base de datos.');
-    console.log('----------------------------------------');
-
-
-    // (Opcional fuerte) validar refresh token activo en BD
-    const { rows } = await pool.query(
-      'SELECT sp_validate_access_token($1, $2, $3) AS valido',
-      [decoded.user_id, decoded.empresa_id, token]
+    //------------------------------------------------
+    // VALIDACIÓN BD
+    //------------------------------------------------
+    const valido = await validateTokenBD(
+      decoded.user_id,
+      decoded.empresa_id,
+      token
     );
 
-    // console.log('Resultado validación en BD:', rows[0].valido);
-    console.log('Resultado validación en BD:', rows[0]);
-    console.log('----------------------------------------');
-
-    if (!rows[0].valido) {
-      return res.status(401).json({ message: 'Sesión no válida' });
+    if (!valido) {
+      return res.status(401).json({
+        success: false,
+        message: 'Sesión no válida'
+      });
     }
 
-    // Inyectar usuario al request
+    //------------------------------------------------
+    // USER CONTEXT
+    //------------------------------------------------
     req.user = {
       id: decoded.user_id,
       empresa_id: decoded.empresa_id,
       estado: decoded.estado,
-      role: decoded.role,
+      role: decoded.role
     };
 
     next();
-  } catch (error) {
-    console.error('Auth error:', error.message);
 
+  } catch (error) {
     return res.status(401).json({
-      message: 'Token inválido o expirado',
+      success: false,
+      message: 'Token inválido o expirado'
     });
   }
-};
 
+};

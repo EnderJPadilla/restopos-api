@@ -1,11 +1,13 @@
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import { getValidateUserForAuth, getUserForAuth, logoutUser } from '../services/auth.service.js';
 import {
   generateAccessToken,
   generateRefreshToken,
+  validateTokenBD,
   storeRefreshToken,
   validateRefreshTokenBD
-} from '../auth/token.service.js';
+} from '../services/token.service.js';
 
 export const validateUser = async (req, res) => {
   const { usuario } = req.body;
@@ -49,19 +51,22 @@ export const validateUser = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  const { usuario, password, empresa_id } = req.body;
+  // const { usuario, password, empresa_id } = req.body;
+  const { usuario, password } = req.body;
 
   console.log('Ejecutando login.');
   console.log('----------------------------------------');
   // console.log(`Usuario: ${usuario} - Password: ${password} - empresa_id: ${empresa_id}`);
   try {
-    if (!usuario || !password || !empresa_id) {
+    // if (!usuario || !password || !empresa_id) {
+    if (!usuario || !password) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
     }
 
-    const user = await getUserForAuth(usuario, empresa_id);
+    // const user = await getUserForAuth(usuario, empresa_id);
+    const user = await getUserForAuth(usuario);
 
     if (!user) {
       return res.status(401).json({
@@ -103,13 +108,13 @@ export const login = async (req, res) => {
       accessToken,
       refreshToken,
       usuario: {
-        usuario_id: user.usuario_id,
+        id: user.usuario_id,
         empresa_id: user.empresa_id,
-        nombre_usuario: user.nombre_usuario,
-        nombres: user.nombres,
-        apellidos: user.apellidos,
-        nombre_completo: user.nombre_completo,
-        rol: user.rol
+        username: user.nombre_usuario,
+        firstName: user.nombres,
+        lastName: user.apellidos,
+        name: user.nombre_completo,
+        role: user.rol
       },
     });
 
@@ -121,6 +126,77 @@ export const login = async (req, res) => {
     });
   }
 };
+
+export const tokenSesion = async (req, res) => {
+
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token no enviado'
+      });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token inválido'
+      });
+    }
+
+    //------------------------------------------------
+    // VALIDACIÓN LOCAL JWT
+    //------------------------------------------------
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    //------------------------------------------------
+    // VALIDACIÓN BD
+    //------------------------------------------------
+    console.log('Validando Token de sesión en base de datos...');
+    // console.log('----------------------------------------');
+    const valido = await validateTokenBD(
+      decoded.user_id,
+      decoded.empresa_id,
+      token
+    );
+
+    if (!valido) {
+      return res.status(401).json({
+        success: false,
+        message: 'Sesión no válida'
+      });
+    }
+
+    console.log('Token válido. Usuario autenticado.');
+    console.log('----------------------------------------');
+
+    //------------------------------------------------
+    // USER CONTEXT
+    //------------------------------------------------
+    req.user = {
+      id: decoded.user_id,
+      empresa_id: decoded.empresa_id,
+      estado: decoded.estado,
+      role: decoded.rol
+    };
+
+    return res.json({
+      success: true,
+      message: 'Token válido',
+      user: req.user
+    });
+
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: 'Token inválido o expirado'
+    });
+  }
+
+};
+
 
 export const refreshToken = async (req, res) => {
   const { refresh_token } = req.body;

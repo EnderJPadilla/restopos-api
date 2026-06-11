@@ -27,6 +27,24 @@ export const storeRefreshToken = async (
   );
 };
 
+
+export const validateTokenBD = async (userId, empresaId, token) => {
+  console.log('Validando Token de sesión en base de datos...');
+  console.log('----------------------------------------');
+
+  const { rows, rowCount } = await pool.query(
+    'SELECT sp_validate_access_token($1, $2, $3) AS valido',
+    [userId, empresaId, token]
+  );
+
+  // El SP debería retornar máximo 1 registro
+  if (rowCount > 1) {
+    throw new Error('RESPUESTA_INCONSISTENTE_SP');
+  }
+
+  return rows[0] || null;
+};
+
 export const validateRefreshTokenBD = async (refreshToken) => {
   console.log('Validando refresh token en base de datos...');
   console.log('----------------------------------------');

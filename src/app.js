@@ -8,12 +8,19 @@ import categoriasRoutes from '../src/routes/categories.routes.js';
 import settingsRoutes from '../src/routes/settings.routes.js';
 import tablesRoutes from '../src/routes/tables.routes.js';
 import orderRoutes from '../src/routes/order.routes.js';
+import uploadRoutes from "./routes/upload.routes.js";
 
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
+app.use(
+  "/storage",
+  express.static(
+    process.env.UPLOAD_PATH
+  )
+);
 app.use('/api/auth', authRoutes);
 app.use('/api/productos', productRoutes);
 app.use('/api/usuarios', usersRoutes);
@@ -22,5 +29,6 @@ app.use('/api/categorias', categoriasRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/tables', tablesRoutes);
 app.use('/api/pedidos', orderRoutes);
+app.use('/api/upload', uploadRoutes);
 
 export default app;
