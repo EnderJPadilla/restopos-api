@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { getValidateUserForAuth, getUserForAuth, logoutUser } from '../services/auth.service.js';
+import { getValidateUserForAuth, getPasswordForUser, getUserForAuth, logoutUser } from '../services/auth.service.js';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -66,17 +66,20 @@ export const login = async (req, res) => {
     }
 
     // const user = await getUserForAuth(usuario, empresa_id);
-    const user = await getUserForAuth(usuario);
+    const datos = await getUserForAuth(usuario);
+    const user = datos.response;
 
-    if (!user) {
-      return res.status(401).json({
-        message: 'Credenciales inválidas',
-      });
+    // console.log('User: ', user);
+
+    if (!user.success) {
+      return res.status(401).json(
+        user,
+      );
     }
 
     const isValid = await bcrypt.compare(
       password,
-      user.contrasena
+      user.data.password_hash
     );
 
     if (!isValid) {
@@ -87,18 +90,17 @@ export const login = async (req, res) => {
 
     // Aquí generar JWT
     const payload = {
-      user_id: user.usuario_id,
-      empresa_id: user.empresa_id,
-      estado: user.estado,
-      rol: user.rol,
+      user_id: user.data.id,
+      empresa_id: user.data.empresa_id,
+      rol: user.data.role,
     };
 
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
     await storeRefreshToken(
-      user.usuario_id,
-      user.empresa_id,
+      user.data.id,
+      user.data.empresa_id,
       accessToken,
       refreshToken
     );
@@ -108,15 +110,62 @@ export const login = async (req, res) => {
       accessToken,
       refreshToken,
       usuario: {
-        id: user.usuario_id,
-        empresa_id: user.empresa_id,
-        username: user.nombre_usuario,
-        firstName: user.nombres,
-        lastName: user.apellidos,
-        name: user.nombre_completo,
-        role: user.rol
+        id: user.data.id,
+        empresa_id: user.data.empresa_id,
+        username: user.data.username,
+        firstName: user.data.firstName,
+        lastName: user.data.lastName,
+        name: user.data.name,
+        role: user.data.role,
+        requirePasswordChange: user.data.requirePasswordChange,
+        password: password
       },
     });
+
+  } catch (error) {
+    console.error(error.message);
+    console.log('----------------------------------------');
+    return res.status(401).json({
+      message: error.message
+    });
+  }
+};
+
+export const cambiarPassword = async (req, res) => {
+  const { password } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
+
+  console.log('Ejecutando Cambio de contraseña.');
+  console.log('----------------------------------------');
+  
+  try {
+    if (!idUsuario || !password || !empresa_id) {
+      return res.status(400).json({
+        message: 'Parámetros incompletos',
+      });
+    }
+
+    // Encriptar contraseña
+    const saltRounds = 12; // recomendado entre 10-14
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    const datos = await getPasswordForUser(empresa_id, idUsuario, passwordHash);
+
+    // console.log('Datos: ', datos);
+
+    if (!datos.response.success) {
+      return res.status(401).json(
+        datos.response
+      );
+    }
+
+    console.log('Contraseña actualizada.');
+    console.log('----------------------------------------');
+    
+    return res.json(
+      datos.response
+    );
 
   } catch (error) {
     console.error(error.message);

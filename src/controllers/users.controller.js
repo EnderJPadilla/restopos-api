@@ -2,7 +2,9 @@ import bcrypt from 'bcrypt';
 import { getUsers, newUser, validarNombre, updateUser, activeUser, deleteUser } from '../services/users.service.js';
 
 export const getUsuarios = async (req, res) => {
-  const { empresa_id } = req.body;
+  // const { empresa_id } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando Listar usuarios.');
   console.log('----------------------------------------');
@@ -25,9 +27,9 @@ export const getUsuarios = async (req, res) => {
     console.log('Usuarios Listados.');
     // console.log('users:', users['data']['data']);
     console.log('----------------------------------------');
-    return res.json({
-      usuarios: users['data']['data']['usuarios']
-    });
+    return res.json(
+      users.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -39,13 +41,15 @@ export const getUsuarios = async (req, res) => {
 };
 
 export const newUsuario = async (req, res) => {
-  const { empresa_id, dataUsuario } = req.body;
+  const { dataUsuario } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando Crear usuario.');
   console.log('----------------------------------------');
 
   try {
-    if (!empresa_id || !dataUsuario) {
+    if (!empresa_id || !idUsuario || !dataUsuario) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
@@ -53,12 +57,12 @@ export const newUsuario = async (req, res) => {
 
     // Encriptar contraseña
     const saltRounds = 12; // recomendado entre 10-14
-    const passwordHash = await bcrypt.hash(dataUsuario.acceso.pin_secret, saltRounds);
+    const passwordHash = await bcrypt.hash(dataUsuario.pin, saltRounds);
 
     // Reemplazar contraseña en payload
-    dataUsuario.acceso.pin_secret = passwordHash;
+    dataUsuario.passwordHash = passwordHash;
 
-    const data = await newUser(empresa_id, dataUsuario);
+    const data = await newUser(empresa_id, idUsuario, dataUsuario);
     console.log('Data Usuario:', dataUsuario);
     console.log('----------------------------------------');
 
@@ -70,9 +74,9 @@ export const newUsuario = async (req, res) => {
     
     console.log('Usuario registrado con exito.')
     console.log('----------------------------------------');
-    return res.json({
-      usuario: data
-    });
+    return res.json(
+      data.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -156,22 +160,21 @@ export const usuarioActivo = async (req, res) => {
 };
 
 export const uploadUsuario = async (req, res) => {
-  const { empresa_id, dataUsuario } = req.body;
+  const { dataUsuario } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando Actualizar Usuario.');
   console.log('----------------------------------------');
-  // console.log('Empresa: '+empresa_id);
-  // console.log('DataProducto: '+dataProducto['producto']);
-  // console.log('----------------------------------------');
 
   try {
-    if (!empresa_id || !dataUsuario) {
+    if (!empresa_id || !idUsuario || !dataUsuario) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
     }
 
-    const usuario = await updateUser(empresa_id, dataUsuario);
+    const usuario = await updateUser(empresa_id, idUsuario, dataUsuario);
 
     if (!usuario) {
       return res.status(401).json({
@@ -181,9 +184,9 @@ export const uploadUsuario = async (req, res) => {
 
     console.log('Usuario actualizado con exito.')
     console.log('----------------------------------------');
-    return res.json({
-      usuario: usuario
-    });
+    return res.json(
+      usuario.response
+    );
 
   } catch (error) {
     console.error(error.message);

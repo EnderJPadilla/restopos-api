@@ -1,6 +1,8 @@
 import fs from "fs";
+import path from "path";
 import { guardarImagenBase64 } from "../utils/image.helper.js";
-import { getProducts, newProducts, updateProduct, ProductDisponible, deleteProduct } from '../services/produts.service.js';
+import { PRODUCTS_PATH } from "../config/storage.js";
+import { getProducts, newProducts, updateProduct, validateDeleteImagen, ProductDisponible, deleteProduct } from '../services/produts.service.js';
 
 export const getProductos = async (req, res) => {
   // const { empresa_id } = req.body;
@@ -139,13 +141,44 @@ export const uploadProductos = async (req, res) => {
     }
 
     const producto = await updateProduct(empresa_id, idUsuario, dataProducto);
-
     if (!producto) {
       return res.status(401).json({
         message: 'Error al actualizar los datos del producto.',
       });
     }
+    
+    if (
+      dataProducto.removeImage &&
+      dataProducto.imageAnt
+    ) {
+      console.log('Ejecutando Validar imagen del Producto.');
+      // console.log('----------------------------------------');
 
+      const deleteImage = await validateDeleteImagen(empresa_id, dataProducto.imageAnt, dataProducto.id );
+      console.log('Respuesta:====>>>> ', deleteImage.response.success);
+      if (!deleteImage.response.success) {
+        return res.status(401).json({
+          message: 'Error al eliminar la imagen del producto.',
+        });
+      }
+
+      const rutaRelativa = dataProducto.imageAnt.replace(/^\/?storage\/productos[\\/]/, "");
+
+      const rutaCompleta = path.join(
+        PRODUCTS_PATH,
+        rutaRelativa
+      );
+      
+      console.log('RUTA:: ', rutaCompleta);
+      console.log('----------------------------------------');
+      if (
+        fs.existsSync(rutaCompleta)
+      ) {
+        fs.unlinkSync(rutaCompleta);
+      }
+      
+    }
+    
     console.log('Producto actualizado con exito.')
     console.log('----------------------------------------');
     return res.json(

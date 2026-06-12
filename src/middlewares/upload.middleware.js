@@ -3,9 +3,7 @@ import path from "path";
 import multer from "multer";
 import crypto from "crypto";
 
-import {
-  PRODUCTS_PATH
-} from "../config/storage.js";
+import { PRODUCTS_PATH } from "../config/storage.js";
 
 const storage = multer.diskStorage({
 

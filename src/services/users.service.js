@@ -8,7 +8,7 @@ export const getUsers = async (idEmpresa) => {
 
   try {
     const { rows, rowCount } = await pool.query(
-      'SELECT * FROM sp_listar_usuarios($1) AS data',
+      'SELECT fn_usuarios_listar($1) AS response',
       [idEmpresa]
     );
 
@@ -36,16 +36,16 @@ export const getUsers = async (idEmpresa) => {
   }
 };
 
-export const newUser = async (idEmpresa, dataUsuario) => {
+export const newUser = async (idEmpresa, idUsuario, dataUsuario) => {
 
-  if (!idEmpresa || !dataUsuario) {
+  if (!idEmpresa || !idUsuario || !dataUsuario) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_registrar_usuario($1, $2, NULL)',
-      [idEmpresa, dataUsuario]
+      'SELECT fn_usuario_guardar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataUsuario]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -143,16 +143,16 @@ export const activeUser = async (idEmpresa, empleado_id, usuario_id, activo) => 
   }
 };
 
-export const updateUser = async (idEmpresa, dataUsuario) => {
+export const updateUser = async (idEmpresa, idUsuario, dataUsuario) => {
 
-  if (!idEmpresa || !dataUsuario) {
+  if (!idEmpresa || !idUsuario || !dataUsuario) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_actualizar_usuario($1, $2, NULL)',
-      [idEmpresa, dataUsuario]
+      'SELECT fn_usuario_actualizar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataUsuario]
     );
 
     // El SP debería retornar máximo 1 registro
