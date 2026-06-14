@@ -1,7 +1,7 @@
 import { getCategorias, newCategoria, validarNombre, activeCategoria, updateCategoria, deleteCategoria } from '../services/categories.service.js';
 
 export const getCategories = async (req, res) => {
-  const { empresa_id } = req.body;
+  const empresa_id = req.user.empresa_id;
 
   try {
     if (!empresa_id) {
@@ -16,7 +16,7 @@ export const getCategories = async (req, res) => {
     const categorias = await getCategorias(empresa_id);
 
     if (!categorias) {
-      return res.status(401).json({
+      return res.json({
         message: 'Categorias no encontradas.',
       });
     }
@@ -24,9 +24,9 @@ export const getCategories = async (req, res) => {
     console.log('Categorias Listadas.');
     // console.log('Categorias:', categorias['data']);
     console.log('----------------------------------------');
-    return res.json({
-      categorias: categorias['data']
-    });
+    return res.json(
+      categorias.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -38,33 +38,35 @@ export const getCategories = async (req, res) => {
 };
 
 export const newCategory = async (req, res) => {
-  const { empresa_id, dataCategoria } = req.body;
+  const { dataCategoria } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando Crear Categoria.');
   console.log('----------------------------------------');
 
   try {
-    if (!empresa_id || !dataCategoria) {
-      return res.status(400).json({
+    if (!empresa_id || !idUsuario || !dataCategoria) {
+      return res.json({
         message: 'Parámetros incompletos',
       });
     }
 
-    const data = await newCategoria(empresa_id, dataCategoria);
+    const data = await newCategoria(empresa_id, idUsuario, dataCategoria);
     console.log('Data Categoria:', dataCategoria);
     console.log('----------------------------------------');
 
     if (!data) {
-      return res.status(401).json({
+      return res.json({
         message: 'Error al crear la Categoria.',
       });
     }
     
     console.log('Categoria registrada con exito.')
     console.log('----------------------------------------');
-    return res.json({
-      categoria: data
-    });
+    return res.json(
+      data.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -113,31 +115,33 @@ export const validateName = async (req, res) => {
 };
 
 export const categoryActivo = async (req, res) => {
-  const { empresa_id, categoria_id, activo } = req.body;
+  const { categoria_id, activo } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando (In)activar categoria.');
   console.log('----------------------------------------');
 
   try {
-    if (!empresa_id || !categoria_id || activo === undefined) {
-      return res.status(400).json({
+    if (!empresa_id || !idUsuario || !categoria_id || activo === undefined) {
+      return res.json({
         message: 'Parámetros incompletos',
       });
     }
 
-    const categoria = await activeCategoria(empresa_id, categoria_id, activo);
+    const categoria = await activeCategoria(empresa_id, idUsuario, categoria_id, activo);
 
     if (!categoria) {
-      return res.status(401).json({
+      return res.json({
         message: 'Error al (In)activar la categoria.',
       });
     }
 
     console.log('Categoria (In)activado con exito.');
     console.log('----------------------------------------');
-    return res.json({
-      categoria: categoria
-    });
+    return res.json(
+      categoria.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -149,11 +153,13 @@ export const categoryActivo = async (req, res) => {
 };
 
 export const uploadCategory = async (req, res) => {
-  const { empresa_id, dataCategoria } = req.body;
+  const { dataCategoria } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   try {
-    if (!empresa_id || !dataCategoria) {
-      return res.status(400).json({
+    if (!empresa_id || !idUsuario || !dataCategoria) {
+      return res.json({
         message: 'Parámetros incompletos',
       });
     }
@@ -161,19 +167,19 @@ export const uploadCategory = async (req, res) => {
     console.log('Ejecutando Actualizar Categoria.');
     console.log('----------------------------------------');
 
-    const categoria = await updateCategoria(empresa_id, dataCategoria);
+    const categoria = await updateCategoria(empresa_id, idUsuario, dataCategoria);
 
     if (!categoria) {
-      return res.status(401).json({
+      return res.json({
         message: 'Error al actualizar los datos de la categoria.',
       });
     }
 
     console.log('Categoria actualizada con exito.')
     console.log('----------------------------------------');
-    return res.json({
-      categoria: categoria
-    });
+    return res.json(
+      categoria.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -185,11 +191,13 @@ export const uploadCategory = async (req, res) => {
 };
 
 export const deleteCategory = async (req, res) => {
-  const { empresa_id, categoria_id } = req.body;
+  const { categoria_id } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   try {
-    if (!empresa_id || !categoria_id) {
-      return res.status(400).json({
+    if (!empresa_id || !idUsuario || !categoria_id) {
+      return res.json({
         message: 'Parámetros incompletos',
       });
     }
@@ -197,19 +205,19 @@ export const deleteCategory = async (req, res) => {
     console.log('Ejecutando Eliminar Categoria.');
     console.log('----------------------------------------');
 
-    const categoria = await deleteCategoria(empresa_id, categoria_id);
+    const categoria = await deleteCategoria(empresa_id, idUsuario, categoria_id);
 
     if (!categoria) {
-      return res.status(401).json({
+      return res.json({
         message: 'Error al eliminar la categoria.',
       });
     }
 
     console.log('Categoria Eliminada.');
     console.log('----------------------------------------');
-    return res.json({
-      categoria: categoria
-    });
+    return res.json(
+      categoria.response
+    );
 
   } catch (error) {
     console.error(error.message);

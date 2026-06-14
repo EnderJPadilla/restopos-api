@@ -1,19 +1,27 @@
 import path from "path";
 
-export const STORAGE_ROOT =
-  process.env.UPLOAD_PATH;
+export const STORAGE_ROOT = process.env.UPLOAD_PATH;
 
-export const PRODUCTS_PATH = path.join(
-  STORAGE_ROOT,
-  "productos"
-);
+export const STORAGE_PATHS = {
 
-export const USERS_PATH = path.join(
-  STORAGE_ROOT,
-  "usuarios"
-);
+  productos: path.join(
+    STORAGE_ROOT,
+    "productos"
+  ),
 
-export const COMPANIES_PATH = path.join(
-  STORAGE_ROOT,
-  "empresas"
-);
+  usuarios: path.join(
+    STORAGE_ROOT,
+    "usuarios"
+  ),
+
+  empresas: path.join(
+    STORAGE_ROOT,
+    "empresas"
+  )
+
+};
+
+// Compatibilidad con código existente
+export const PRODUCTS_PATH = STORAGE_PATHS.productos;
+export const USERS_PATH = STORAGE_PATHS.usuarios;
+export const COMPANIES_PATH = STORAGE_PATHS.empresas;

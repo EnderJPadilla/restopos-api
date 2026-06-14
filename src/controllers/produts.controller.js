@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { guardarImagenBase64 } from "../utils/image.helper.js";
-import { PRODUCTS_PATH } from "../config/storage.js";
+import { STORAGE_PATHS } from "../config/storage.js";
 import { getProducts, newProducts, updateProduct, validateDeleteImagen, ProductDisponible, deleteProduct } from '../services/produts.service.js';
 
 export const getProductos = async (req, res) => {
@@ -22,7 +22,7 @@ export const getProductos = async (req, res) => {
     const products = await getProducts(empresa_id);
 
     if (!products) {
-      return res.status(401).json({
+      return res.json({
         message: 'Productos no encontrados.',
       });
     }
@@ -67,7 +67,7 @@ export const newProductos = async (req, res) => {
     const products = await newProducts(empresa_id, idUsuario, dataProducto);
 
     if (!products) {
-      return res.status(401).json({
+      return res.json({
         message: 'Error al crear el producto.',
       });
     }
@@ -105,7 +105,7 @@ export const productoDisponible = async (req, res) => {
     const producto = await ProductDisponible(empresa_id, idUsuario, producto_id, disponible);
 
     if (!producto) {
-      return res.status(401).json({
+      return res.json({
         message: 'Error al actualizar la disponibilidad del producto.',
       });
     }
@@ -142,7 +142,7 @@ export const uploadProductos = async (req, res) => {
 
     const producto = await updateProduct(empresa_id, idUsuario, dataProducto);
     if (!producto) {
-      return res.status(401).json({
+      return res.json({
         message: 'Error al actualizar los datos del producto.',
       });
     }
@@ -154,10 +154,12 @@ export const uploadProductos = async (req, res) => {
       console.log('Ejecutando Validar imagen del Producto.');
       // console.log('----------------------------------------');
 
-      const deleteImage = await validateDeleteImagen(empresa_id, dataProducto.imageAnt, dataProducto.id );
-      console.log('Respuesta:====>>>> ', deleteImage.response.success);
+      const deleteImage = await validateDeleteImagen(
+        empresa_id, dataProducto.imageAnt, dataProducto.id, 'productos' 
+      );
+      // console.log('Respuesta:====>>>> ', deleteImage.response.success);
       if (!deleteImage.response.success) {
-        return res.status(401).json({
+        return res.json({
           message: 'Error al eliminar la imagen del producto.',
         });
       }
@@ -165,12 +167,12 @@ export const uploadProductos = async (req, res) => {
       const rutaRelativa = dataProducto.imageAnt.replace(/^\/?storage\/productos[\\/]/, "");
 
       const rutaCompleta = path.join(
-        PRODUCTS_PATH,
+        STORAGE_PATHS["productos"],
         rutaRelativa
       );
       
-      console.log('RUTA:: ', rutaCompleta);
-      console.log('----------------------------------------');
+      // console.log('RUTA:: ', rutaCompleta);
+      // console.log('----------------------------------------');
       if (
         fs.existsSync(rutaCompleta)
       ) {
@@ -212,7 +214,7 @@ export const deleteProductos = async (req, res) => {
     const producto = await deleteProduct(empresa_id, idUsuario, producto_id);
 
     if (!producto) {
-      return res.status(401).json({
+      return res.json({
         message: 'Error al eliminar el producto.',
       });
     }

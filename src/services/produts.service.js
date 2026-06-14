@@ -148,16 +148,16 @@ export const updateProduct = async (idEmpresa, idUsuario, dataProduct) => {
   }
 };
 
-export const validateDeleteImagen = async (idEmpresa, ruta, dataProduct) => {
+export const validateDeleteImagen = async (idEmpresa, ruta, dataProduct, accion) => {
 
-  if (!idEmpresa || !ruta || !dataProduct) {
+  if (!idEmpresa || !ruta || !dataProduct || !accion) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'SELECT fn_producto_validar_eliminar_imagen($1, $2, $3) AS response',
-      [idEmpresa, ruta, dataProduct]
+      'SELECT fn_validar_eliminar_imagen($1, $2, $3, $4) AS response',
+      [idEmpresa, ruta, dataProduct, accion]
     );
 
     // El SP debería retornar máximo 1 registro

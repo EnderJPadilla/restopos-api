@@ -2,62 +2,65 @@ import fs from "fs";
 import path from "path";
 import multer from "multer";
 import crypto from "crypto";
+import { STORAGE_PATHS, } from "../config/storage.js";
 
-import { PRODUCTS_PATH } from "../config/storage.js";
+function createStorage(basePath) {
 
-const storage = multer.diskStorage({
+  return multer.diskStorage({
 
-  destination: (
-    req,
-    file,
-    cb
-  ) => {
+    destination: (
+      req,
+      file,
+      cb
+    ) => {
 
-    try {
-      const empresaId = req.user.empresa_id;
-      const empresaPath = path.join(
-        PRODUCTS_PATH,
-        empresaId
+      try {
+        const empresaId = req.user.empresa_id;
+        const empresaPath = path.join(
+          basePath,
+          empresaId
+        );
+
+        fs.mkdirSync(
+          empresaPath,
+          {
+            recursive: true
+          }
+        );
+
+        cb(
+          null,
+          empresaPath
+        );
+
+      } catch (error) {
+        cb(error);
+      }
+
+    },
+
+    filename: (
+      req,
+      file,
+      cb
+    ) => {
+
+      const extension = path.extname(
+        file.originalname
       );
 
-      fs.mkdirSync(
-        empresaPath,
-        {
-          recursive: true
-        }
-      );
+      const uniqueName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
 
       cb(
         null,
-        empresaPath
+        uniqueName
       );
 
-    } catch (error) {
-      cb(error);
     }
 
-  },
+  });
 
-  filename: (
-    req,
-    file,
-    cb
-  ) => {
-
-    const extension = path.extname(
-      file.originalname
-    );
-
-    const uniqueName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
-
-    cb(
-      null,
-      uniqueName
-    );
-
-  }
-
-});
+}
 
 const fileFilter = (
   req,
@@ -90,10 +93,29 @@ const fileFilter = (
 
 };
 
-export const uploadProducto = multer({
-  storage,
-  fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024
+export function getUploader(
+  folder,
+  maxSize
+) {
+
+  const basePath = STORAGE_PATHS[folder];
+  if (!basePath) {
+    throw new Error(
+      `No existe la carpeta '${folder}' en el arbol de ruta permitida.`
+    );
   }
-});
+
+  return multer({
+    storage: createStorage(
+      basePath
+    ),
+    fileFilter,
+    limits: {
+      fileSize:
+        maxSize *
+        1024 *
+        1024
+    }
+  });
+
+}

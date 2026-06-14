@@ -8,7 +8,7 @@ export const getMesas = async (idEmpresa) => {
 
   try {
     const { rows, rowCount } = await pool.query(
-      'SELECT * FROM fn_listar_mesas($1) AS data',
+      'SELECT fn_mesa_listar($1) AS response',
       [idEmpresa]
     );
 
@@ -36,16 +36,16 @@ export const getMesas = async (idEmpresa) => {
   }
 };
 
-export const newMesa = async (idEmpresa, dataMesa) => {
+export const newMesa = async (idEmpresa, idUsuario, dataMesa) => {
 
-  if (!idEmpresa || !dataMesa) {
+  if (!idEmpresa || !idUsuario || !dataMesa) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_registrar_mesa($1, $2, NULL)',
-      [idEmpresa, dataMesa]
+      'SELECT fn_mesa_guardar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataMesa]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -144,16 +144,16 @@ export const validarNombre = async (idEmpresa, tableName) => {
   }
 };
 
-export const activeMesa = async (idEmpresa, mesa_id, activo) => {
+export const activeMesa = async (idEmpresa, idUsuario, mesa_id, activo) => {
 
-  if (!idEmpresa || !mesa_id || activo === undefined) {
+  if (!idEmpresa || !idUsuario || !mesa_id || activo === undefined) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_mesa_activo($1, $2, $3, NULL)',
-      [idEmpresa, mesa_id, activo]
+      'SELECT sp_mesa_activo($1, $2, $3, $4) AS response',
+      [idEmpresa, idUsuario, mesa_id, activo]
     );
 
     if (rowCount > 1) {
@@ -179,16 +179,16 @@ export const activeMesa = async (idEmpresa, mesa_id, activo) => {
   }
 };
 
-export const updateMesa = async (idEmpresa, dataMesa) => {
+export const updateMesa = async (idEmpresa, idUsuario, dataMesa) => {
 
-  if (!idEmpresa || !dataMesa) {
+  if (!idEmpresa || !idUsuario || !dataMesa) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_actualizar_mesa($1, $2, NULL)',
-      [idEmpresa, dataMesa]
+      'SELECT fn_mesa_actualizar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataMesa]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -215,16 +215,16 @@ export const updateMesa = async (idEmpresa, dataMesa) => {
   }
 };
 
-export const deleteMesa = async (idEmpresa, mesa_id) => {
+export const deleteMesa = async (idEmpresa, idUsuario, mesa_id, motivo) => {
 
-  if (!idEmpresa || !mesa_id) {
+  if (!idEmpresa || !idUsuario || !mesa_id || !motivo) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_eliminar_mesa($1, $2, NULL)',
-      [idEmpresa, mesa_id]
+      'SELECT fn_mesa_eliminar($1, $2, $3, $4) AS response',
+      [idEmpresa, idUsuario, mesa_id, motivo]
     );
 
     // El SP debería retornar máximo 1 registro

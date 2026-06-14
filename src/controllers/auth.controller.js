@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { getValidateUserForAuth, getPasswordForUser, getUserForAuth, logoutUser } from '../services/auth.service.js';
+import { getValidateUserForAuth, getPasswordForUser, getUserForAuth, logoutUser, registrarLoginExitoso, registrarLoginFallido, registrarIntento } from '../services/auth.service.js';
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -25,7 +25,7 @@ export const validateUser = async (req, res) => {
     const user = await getValidateUserForAuth(usuario);
 
     if (!user) {
-      return res.status(401).json({
+      return res.json({
         authenticated: false,
         message: 'Usuario invalido.',
       });
@@ -51,28 +51,39 @@ export const validateUser = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  // const { usuario, password, empresa_id } = req.body;
   const { usuario, password } = req.body;
 
   console.log('Ejecutando login.');
   console.log('----------------------------------------');
-  // console.log(`Usuario: ${usuario} - Password: ${password} - empresa_id: ${empresa_id}`);
+  
   try {
-    // if (!usuario || !password || !empresa_id) {
     if (!usuario || !password) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
     }
 
-    // const user = await getUserForAuth(usuario, empresa_id);
     const datos = await getUserForAuth(usuario);
     const user = datos.response;
+    const userAgent = req.get("User-Agent");
+    const ip =req.ip;
 
-    // console.log('User: ', user);
+    console.log('User: ', user);
 
     if (!user.success) {
-      return res.status(401).json(
+      if (user.message != 'Usuario no existe.') {
+        await registrarIntento(
+          user.data.id,
+          user.data.empresa_id,
+          user.data.username,
+          false,
+          user.message,
+          ip,
+          userAgent
+        );
+      }
+
+      return res.json(
         user,
       );
     }
@@ -83,9 +94,46 @@ export const login = async (req, res) => {
     );
 
     if (!isValid) {
-      return res.status(401).json({
-        message: 'Credenciales inválidas',
-      });
+      const datos = await registrarLoginFallido(
+        user.data.empresa_id,
+        user.data.id
+      );
+      const datosLoginFallido = datos.response;
+
+      await registrarIntento(
+        user.data.id,
+        user.data.empresa_id,
+        user.data.username,
+        false,
+        "Contraseña incorrecta",
+        ip,
+        userAgent
+      );
+
+      
+      
+      console.log("----------------------------------------");
+      console.log("datosLoginFallido", datosLoginFallido);
+      console.log("----------------------------------------");
+
+      if (datosLoginFallido.bloqueado) {
+        return res.json({
+          message: datosLoginFallido.message,
+          bloqueado: 
+            datosLoginFallido.bloqueado 
+            ? datosLoginFallido.bloqueado
+            : false,
+          fecha_desbloqueo : 
+            datosLoginFallido.fecha_desbloqueo 
+              ? datosLoginFallido.fecha_desbloqueo
+              : null
+        });
+
+      }else {
+        return res.json({
+          message: 'Credenciales inválidas. ' + datosLoginFallido.message
+        });
+      }
     }
 
     // Aquí generar JWT
@@ -105,6 +153,20 @@ export const login = async (req, res) => {
       refreshToken
     );
 
+    await registrarLoginExitoso(
+      user.data.empresa_id,
+      user.data.id
+    );
+    await registrarIntento(
+      user.data.id,
+      user.data.empresa_id,
+      user.data.username,
+      true,
+      "OK",
+      ip,
+      userAgent
+    );
+
     return res.json({
       authenticated: true,
       accessToken,
@@ -116,6 +178,7 @@ export const login = async (req, res) => {
         firstName: user.data.firstName,
         lastName: user.data.lastName,
         name: user.data.name,
+        avatar: user.data.avatar,
         role: user.data.role,
         requirePasswordChange: user.data.requirePasswordChange,
         password: password
@@ -123,9 +186,9 @@ export const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(error.message);
+    console.error("error en login principal login(): ", error.message);
     console.log('----------------------------------------');
-    return res.status(401).json({
+    return res.json({
       message: error.message
     });
   }
@@ -155,7 +218,7 @@ export const cambiarPassword = async (req, res) => {
     // console.log('Datos: ', datos);
 
     if (!datos.response.success) {
-      return res.status(401).json(
+      return res.json(
         datos.response
       );
     }
@@ -181,7 +244,7 @@ export const tokenSesion = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-      return res.status(401).json({
+      return res.json({
         success: false,
         message: 'Token no enviado'
       });
@@ -189,7 +252,7 @@ export const tokenSesion = async (req, res) => {
 
     const token = authHeader.split(' ')[1];
     if (!token) {
-      return res.status(401).json({
+      return res.json({
         success: false,
         message: 'Token inválido'
       });
@@ -212,7 +275,7 @@ export const tokenSesion = async (req, res) => {
     );
 
     if (!valido) {
-      return res.status(401).json({
+      return res.json({
         success: false,
         message: 'Sesión no válida'
       });
@@ -256,7 +319,7 @@ export const refreshToken = async (req, res) => {
   const data = await validateRefreshTokenBD(refresh_token);
 
   if (!data || data === null) {
-    return res.status(401).json({ message: 'Refresh inválido' });
+    return res.json({ message: 'Refresh inválido' });
   }
 
   const newAccessToken = generateAccessToken({
@@ -288,7 +351,7 @@ export const logout = async (req, res) => {
     const validate = await logoutUser(usuario, empresa_id, refreshToken);
 
     if (!validate) {
-      return res.status(401).json({
+      return res.json({
         logoutSession: false,
         message: 'Error al cerrar sesión.',
       });

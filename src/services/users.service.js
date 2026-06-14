@@ -179,16 +179,16 @@ export const updateUser = async (idEmpresa, idUsuario, dataUsuario) => {
   }
 };
 
-export const deleteUser = async (idEmpresa, usuario_id) => {
+export const deleteUser = async (idEmpresa, idUsuario, usuario_id) => {
 
-  if (!idEmpresa || !usuario_id) {
+  if (!idEmpresa || !idUsuario || !usuario_id) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_eliminar_usuario($1, $2, NULL)',
-      [idEmpresa, usuario_id]
+      'SELECT fn_eliminar_usuario($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, usuario_id]
     );
 
     // El SP debería retornar máximo 1 registro

@@ -1,11 +1,11 @@
 import { getConfiguraciones, updateConfiguraciones } from '../services/settings.service.js';
 
 export const getSettings = async (req, res) => {
-  const { empresa_id } = req.body;
+  const empresa_id = req.user.empresa_id;
 
   try {
     if (!empresa_id) {
-      return res.status(400).json({
+      return res.json({
         message: 'Parámetros incompletos',
       });
     }
@@ -16,7 +16,7 @@ export const getSettings = async (req, res) => {
     const configuraciones = await getConfiguraciones(empresa_id);
 
     if (!configuraciones) {
-      return res.status(401).json({
+      return res.json({
         message: 'Configuraciones no encontradas.',
       });
     }
@@ -24,9 +24,9 @@ export const getSettings = async (req, res) => {
     console.log('Configuraciones Listadas.');
     // console.log('Categorias:', categorias['data']);
     console.log('----------------------------------------');
-    return res.json({
-      configuraciones: configuraciones['data']
-    });
+    return res.json(
+      configuraciones.response
+    );
 
   } catch (error) {
     console.error(error.message);
@@ -38,10 +38,12 @@ export const getSettings = async (req, res) => {
 };
 
 export const uploadSettings = async (req, res) => {
-  const { empresa_id, dataConfiguraciones } = req.body;
+  const { dataConfiguraciones } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   try {
-    if (!empresa_id || !dataConfiguraciones) {
+    if (!empresa_id ||!idUsuario || !dataConfiguraciones) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
@@ -49,21 +51,23 @@ export const uploadSettings = async (req, res) => {
 
     console.log('Ejecutando Actualizar Configuraciones.');
     console.log('Datos: '+dataConfiguraciones);
+    dataConfiguraciones.activo = true;
+    console.log('Datos: '+dataConfiguraciones);
     console.log('----------------------------------------');
 
-    const configuraciones = await updateConfiguraciones(empresa_id, dataConfiguraciones);
+    const configuraciones = await updateConfiguraciones(empresa_id, idUsuario, dataConfiguraciones);
 
     if (!configuraciones) {
-      return res.status(401).json({
+      return res.json({
         message: 'Error al actualizar los datos de la configuracion.',
       });
     }
 
     console.log('Configuracion actualizada con exito.')
     console.log('----------------------------------------');
-    return res.json({
-      configuraciones: configuraciones
-    });
+    return res.json(
+      configuraciones.response
+    );
 
   } catch (error) {
     console.error(error.message);

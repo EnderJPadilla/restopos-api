@@ -8,7 +8,7 @@ export const getConfiguraciones = async (idEmpresa) => {
 
   try {
     const { rows, rowCount } = await pool.query(
-      'SELECT * FROM fn_listar_configuraciones($1) AS data',
+      'SELECT fn_configuracion_listar($1) AS response',
       [idEmpresa]
     );
 
@@ -36,16 +36,16 @@ export const getConfiguraciones = async (idEmpresa) => {
   }
 };
 
-export const updateConfiguraciones = async (idEmpresa, dataConfiguraciones) => {
+export const updateConfiguraciones = async (idEmpresa, idUsuario, dataConfiguraciones) => {
 
-  if (!idEmpresa || !dataConfiguraciones) {
+  if (!idEmpresa ||!idUsuario || !dataConfiguraciones) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'SELECT * FROM sp_actualizar_configuraciones($1, $2) AS data',
-      [idEmpresa, dataConfiguraciones]
+      'SELECT fn_configuracion_actualizar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataConfiguraciones]
     );
 
     // El SP debería retornar máximo 1 registro

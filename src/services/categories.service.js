@@ -8,7 +8,7 @@ export const getCategorias = async (idEmpresa) => {
 
   try {
     const { rows, rowCount } = await pool.query(
-      'SELECT * FROM fn_listar_categorias($1) AS data',
+      'SELECT fn_categorias_listar($1) AS response',
       [idEmpresa]
     );
 
@@ -36,16 +36,16 @@ export const getCategorias = async (idEmpresa) => {
   }
 };
 
-export const newCategoria = async (idEmpresa, dataUsuario) => {
+export const newCategoria = async (idEmpresa, idUsuario, dataCategoria) => {
 
-  if (!idEmpresa || !dataUsuario) {
+  if (!idEmpresa || !idUsuario || !dataCategoria) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_registrar_categoria($1, $2, NULL)',
-      [idEmpresa, dataUsuario]
+      'SELECT fn_categoria_guardar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataCategoria]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -108,16 +108,16 @@ export const validarNombre = async (idEmpresa, categoryName) => {
   }
 };
 
-export const activeCategoria = async (idEmpresa, categoria_id, activo) => {
+export const activeCategoria = async (idEmpresa, idUsuario, categoria_id, activo) => {
 
-  if (!idEmpresa || !categoria_id || activo === undefined) {
+  if (!idEmpresa || !idUsuario || !categoria_id || activo === undefined) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_categoria_activo($1, $2, $3, NULL)',
-      [idEmpresa, categoria_id, activo]
+      'SELECT fn_categoria_disponibilidad($1, $2, $3, $4) AS response',
+      [idEmpresa, idUsuario, categoria_id, activo]
     );
 
     if (rowCount > 1) {
@@ -143,16 +143,16 @@ export const activeCategoria = async (idEmpresa, categoria_id, activo) => {
   }
 };
 
-export const updateCategoria = async (idEmpresa, dataCategoria) => {
+export const updateCategoria = async (idEmpresa, idUsuario, dataCategoria) => {
 
-  if (!idEmpresa || !dataCategoria) {
+  if (!idEmpresa || !idUsuario || !dataCategoria) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_actualizar_categoria($1, $2, NULL)',
-      [idEmpresa, dataCategoria]
+      'SELECT fn_categoria_actualizar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataCategoria]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -179,16 +179,16 @@ export const updateCategoria = async (idEmpresa, dataCategoria) => {
   }
 };
 
-export const deleteCategoria = async (idEmpresa, categoria_id) => {
+export const deleteCategoria = async (idEmpresa, idUsuario, categoria_id) => {
 
-  if (!idEmpresa || !categoria_id) {
+  if (!idEmpresa || !idUsuario || !categoria_id) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_eliminar_categoria($1, $2, NULL)',
-      [idEmpresa, categoria_id]
+      'SELECT fn_categoria_eliminar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, categoria_id]
     );
 
     // El SP debería retornar máximo 1 registro

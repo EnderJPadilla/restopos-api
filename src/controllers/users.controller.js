@@ -1,5 +1,9 @@
 import bcrypt from 'bcrypt';
+import fs from "fs";
+import path from "path";
 import { getUsers, newUser, validarNombre, updateUser, activeUser, deleteUser } from '../services/users.service.js';
+import { validateDeleteImagen } from '../services/produts.service.js';
+import { STORAGE_PATHS } from '../config/storage.js';
 
 export const getUsuarios = async (req, res) => {
   // const { empresa_id } = req.body;
@@ -182,6 +186,40 @@ export const uploadUsuario = async (req, res) => {
       });
     }
 
+    if (
+      dataUsuario.removeImage &&
+      dataUsuario.imageAnt
+    ) {
+      console.log('Ejecutando Validar imagen del Producto.');
+      // console.log('----------------------------------------');
+
+      const deleteImage = await validateDeleteImagen(
+        empresa_id, dataUsuario.imageAnt, dataUsuario.id, 'usuarios' 
+      );
+      // console.log('Respuesta:====>>>> ', deleteImage.response.success);
+      if (!deleteImage.response.success) {
+        return res.status(401).json({
+          message: 'Error al eliminar la imagen del usuario.',
+        });
+      }
+
+      const rutaRelativa = dataUsuario.imageAnt.replace(/^\/?storage\/usuarios[\\/]/, "");
+
+      const rutaCompleta = path.join(
+        STORAGE_PATHS["usuarios"],
+        rutaRelativa
+      );
+      
+      // console.log('RUTA:: ', rutaCompleta);
+      // console.log('----------------------------------------');
+      if (
+        fs.existsSync(rutaCompleta)
+      ) {
+        fs.unlinkSync(rutaCompleta);
+      }
+      
+    }
+
     console.log('Usuario actualizado con exito.')
     console.log('----------------------------------------');
     return res.json(
@@ -198,19 +236,21 @@ export const uploadUsuario = async (req, res) => {
 };
 
 export const deleteUsuario = async (req, res) => {
-  const { empresa_id, usuario_id } = req.body;
+  const { usuario_id } = req.body;
+  const idUsuario = req.user.id;
+  const empresa_id = req.user.empresa_id;
 
   console.log('Ejecutando Eliminar Usuario.');
   console.log('----------------------------------------');
 
   try {
-    if (!empresa_id || !usuario_id) {
+    if (!empresa_id || !idUsuario || !usuario_id) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
     }
 
-    const usuario = await deleteUser(empresa_id, usuario_id);
+    const usuario = await deleteUser(empresa_id, idUsuario, usuario_id);
 
     if (!usuario) {
       return res.status(401).json({
@@ -220,9 +260,9 @@ export const deleteUsuario = async (req, res) => {
 
     console.log('Usuario Eliminado.');
     console.log('----------------------------------------');
-    return res.json({
-      usuario: usuario
-    });
+    return res.json(
+      usuario.response
+    );
 
   } catch (error) {
     console.error(error.message);
