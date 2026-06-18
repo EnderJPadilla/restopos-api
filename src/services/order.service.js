@@ -1,51 +1,88 @@
 import pool from '../config/database.js';
 
-// export const getMesas = async (idEmpresa) => {
+export const getPedidos = async (idEmpresa) => {
 
-//   if (!idEmpresa) {
-//     throw new Error('PARÁMETROS_INVALIDOS');
-//   }
-
-//   try {
-//     const { rows, rowCount } = await pool.query(
-//       'SELECT * FROM fn_listar_mesas($1) AS data',
-//       [idEmpresa]
-//     );
-
-//     // El SP debería retornar máximo 1 registro
-//     if (rowCount > 1) {
-//       throw new Error('RESPUESTA_INCONSISTENTE_SP');
-//     }
-
-//     return rows[0] || null;
-    
-//   } catch (error) {
-//     // Error lanzado explícitamente desde PostgreSQL
-//     if (error.code === 'P0001') {
-//       // Ej: EMPRESA_NO_EXISTE_O_INACTIVA
-//       throw new Error(error.message);
-//     }
-
-//     // Error de conexión o sintaxis
-//     if (error.code?.startsWith('08')) {
-//       throw new Error('ERROR_CONEXION_BD');
-//     }
-
-//     // Error genérico
-//     throw new Error(error);
-//   }
-// };
-
-export const newPedido = async (idEmpresa, dataPedido) => {
-
-  if (!idEmpresa || !dataPedido) {
+  if (!idEmpresa) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'CALL sp_crear_pedido($1, $2, NULL)',
-      [idEmpresa, dataPedido]
+      'SELECT fn_pedido_listar($1) AS response',
+      [idEmpresa]
+    );
+
+    // El SP debería retornar máximo 1 registro
+    if (rowCount > 1) {
+      throw new Error('RESPUESTA_INCONSISTENTE_SP');
+    }
+
+    return rows[0] || null;
+    
+  } catch (error) {
+    // Error lanzado explícitamente desde PostgreSQL
+    if (error.code === 'P0001') {
+      // Ej: EMPRESA_NO_EXISTE_O_INACTIVA
+      throw new Error(error.message);
+    }
+
+    // Error de conexión o sintaxis
+    if (error.code?.startsWith('08')) {
+      throw new Error('ERROR_CONEXION_BD');
+    }
+
+    // Error genérico
+    throw new Error(error);
+  }
+};
+
+
+export const getPedidoDetalle = async (idEmpresa, id_pedido) => {
+
+  if (!idEmpresa || !id_pedido) {
+    throw new Error('PARÁMETROS_INVALIDOS');
+  }
+
+  try {
+    const { rows, rowCount } = await pool.query(
+      'SELECT fn_pedido_detalle($1, $2) AS response',
+      [idEmpresa, id_pedido]
+    );
+
+    // El SP debería retornar máximo 1 registro
+    if (rowCount > 1) {
+      throw new Error('RESPUESTA_INCONSISTENTE_SP');
+    }
+
+    return rows[0] || null;
+    
+  } catch (error) {
+    // Error lanzado explícitamente desde PostgreSQL
+    if (error.code === 'P0001') {
+      // Ej: EMPRESA_NO_EXISTE_O_INACTIVA
+      throw new Error(error.message);
+    }
+
+    // Error de conexión o sintaxis
+    if (error.code?.startsWith('08')) {
+      throw new Error('ERROR_CONEXION_BD');
+    }
+
+    // Error genérico
+    throw new Error(error);
+  }
+};
+
+export const newPedido = async (idEmpresa, idUsuario, dataPedido) => {
+
+  if (!idEmpresa || !idUsuario || !dataPedido) {
+    throw new Error('PARÁMETROS_INVALIDOS');
+  }
+
+  try {
+    const { rows, rowCount } = await pool.query(
+      'SELECT fn_pedido_guardar($1, $2, $3) AS response',
+      [idEmpresa, idUsuario, dataPedido]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -72,123 +109,29 @@ export const newPedido = async (idEmpresa, dataPedido) => {
   }
 };
 
-export const validarNumero = async (idEmpresa, tableNumber) => {
+export const actualizarDetallePedido = async (
+  idEmpresa,
+  idUsuario,
+  dataPedido,
+  newItems,
+  updateItems,
+  removeItems
+) => {
 
-  if (!idEmpresa || tableNumber == null) {
+  if (!idEmpresa || !idUsuario || !dataPedido || !newItems || !updateItems || !removeItems) {
     throw new Error('PARÁMETROS_INVALIDOS');
   }
 
   try {
     const { rows, rowCount } = await pool.query(
-      'SELECT * FROM sp_validate_table_number($1, $2) AS data',
-      [idEmpresa, tableNumber]
-    );
-
-    // El SP debería retornar máximo 1 registro
-    if (rowCount > 1) {
-      throw new Error('RESPUESTA_INCONSISTENTE_SP');
-    }
-
-    return rows[0] || null;
-    
-  } catch (error) {
-    // Error lanzado explícitamente desde PostgreSQL
-    if (error.code === 'P0001') {
-      // Ej: EMPRESA_NO_EXISTE_O_INACTIVA
-      throw new Error(error.message);
-    }
-
-    // Error de conexión o sintaxis
-    if (error.code?.startsWith('08')) {
-      throw new Error('ERROR_CONEXION_BD');
-    }
-
-    // Error genérico
-    throw new Error(error);
-  }
-};
-
-export const validarNombre = async (idEmpresa, tableName) => {
-
-  if (!idEmpresa || tableName == null) {
-    throw new Error('PARÁMETROS_INVALIDOS');
-  }
-
-  try {
-    const { rows, rowCount } = await pool.query(
-      'SELECT * FROM sp_validate_table_name($1, $2) AS data',
-      [idEmpresa, tableName]
-    );
-
-    // El SP debería retornar máximo 1 registro
-    if (rowCount > 1) {
-      throw new Error('RESPUESTA_INCONSISTENTE_SP');
-    }
-
-    return rows[0] || null;
-    
-  } catch (error) {
-    // Error lanzado explícitamente desde PostgreSQL
-    if (error.code === 'P0001') {
-      // Ej: EMPRESA_NO_EXISTE_O_INACTIVA
-      throw new Error(error.message);
-    }
-
-    // Error de conexión o sintaxis
-    if (error.code?.startsWith('08')) {
-      throw new Error('ERROR_CONEXION_BD');
-    }
-
-    // Error genérico
-    throw new Error(error);
-  }
-};
-
-export const activeMesa = async (idEmpresa, mesa_id, activo) => {
-
-  if (!idEmpresa || !mesa_id || activo === undefined) {
-    throw new Error('PARÁMETROS_INVALIDOS');
-  }
-
-  try {
-    const { rows, rowCount } = await pool.query(
-      'CALL sp_mesa_activo($1, $2, $3, NULL)',
-      [idEmpresa, mesa_id, activo]
-    );
-
-    if (rowCount > 1) {
-      throw new Error('RESPUESTA_INCONSISTENTE_SP');
-    }
-    return rows[0] || null;
-
-  } catch (error) {
-    console.log('Error al (In)activar mesa:', error);
-    // Error lanzado explícitamente desde PostgreSQL
-    if (error.code === 'P0001') {
-      // Ej: EMPRESA_NO_EXISTE_O_INACTIVA
-      throw new Error(error.message);
-    }
-
-    // Error de conexión o sintaxis
-    if (error.code?.startsWith('08')) {
-      throw new Error('ERROR_CONEXION_BD');
-    }
-
-    // Error genérico
-    throw new Error(error);
-  }
-};
-
-export const updateMesa = async (idEmpresa, dataMesa) => {
-
-  if (!idEmpresa || !dataMesa) {
-    throw new Error('PARÁMETROS_INVALIDOS');
-  }
-
-  try {
-    const { rows, rowCount } = await pool.query(
-      'CALL sp_actualizar_mesa($1, $2, NULL)',
-      [idEmpresa, dataMesa]
+      'SELECT fn_pedido_actualizar_detalle($1, $2, $3, $4, $5, $6) AS response',
+      [ idEmpresa, 
+        idUsuario, 
+        dataPedido, 
+        JSON.stringify(newItems), 
+        JSON.stringify(updateItems), 
+        JSON.stringify(removeItems)
+      ]
     );
 
     // El SP debería retornar máximo 1 registro
@@ -198,7 +141,7 @@ export const updateMesa = async (idEmpresa, dataMesa) => {
 
     return rows[0] || null;
   } catch (error) {
-    console.log('Error al actualizar mesa:', error);
+    console.log('Error al actualizar item en el pedido:', error);
     // Error lanzado explícitamente desde PostgreSQL
     if (error.code === 'P0001') {
       // Ej: EMPRESA_NO_EXISTE_O_INACTIVA
@@ -214,40 +157,3 @@ export const updateMesa = async (idEmpresa, dataMesa) => {
     throw new Error(error);
   }
 };
-
-export const deleteMesa = async (idEmpresa, mesa_id) => {
-
-  if (!idEmpresa || !mesa_id) {
-    throw new Error('PARÁMETROS_INVALIDOS');
-  }
-
-  try {
-    const { rows, rowCount } = await pool.query(
-      'CALL sp_eliminar_mesa($1, $2, NULL)',
-      [idEmpresa, mesa_id]
-    );
-
-    // El SP debería retornar máximo 1 registro
-    if (rowCount > 1) {
-      throw new Error('RESPUESTA_INCONSISTENTE_SP');
-    }
-
-    return rows[0] || null;
-  } catch (error) {
-    console.log('Error al eliminar mesa:', error);
-    // Error lanzado explícitamente desde PostgreSQL
-    if (error.code === 'P0001') {
-      // Ej: EMPRESA_NO_EXISTE_O_INACTIVA
-      throw new Error(error.message);
-    }
-
-    // Error de conexión o sintaxis
-    if (error.code?.startsWith('08')) {
-      throw new Error('ERROR_CONEXION_BD');
-    }
-
-    // Error genérico
-    throw new Error(error);
-  }
-};
-

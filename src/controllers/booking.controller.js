@@ -1,6 +1,6 @@
-import { getPedidos, getPedidoDetalle, newPedido, actualizarDetallePedido } from '../services/order.service.js';
+import { getReservas, newReserva } from '../services/booking.service.js';
 
-export const getOrders = async (req, res) => {
+export const getBookings = async (req, res) => {
   const empresa_id = req.user.empresa_id;
 
   try {
@@ -10,21 +10,21 @@ export const getOrders = async (req, res) => {
       });
     }
 
-    console.log('Ejecutando Listar Pedidos.');
+    console.log('Ejecutando Listar Reservas.');
     console.log('----------------------------------------');
 
-    const pedidos = await getPedidos(empresa_id);
+    const reservas = await getReservas(empresa_id);
 
-    if (!pedidos) {
+    if (!reservas) {
       return res.json({
-        message: 'Pedidos no encontrados.',
+        message: 'Rservas no cargadas.',
       });
     }
 
-    console.log('Pedidos Listados.');
+    console.log('Reservas Listadas.');
     console.log('----------------------------------------');
     return res.json(
-      pedidos.response
+      reservas.response
     );
 
   } catch (error) {
@@ -36,68 +36,30 @@ export const getOrders = async (req, res) => {
   }
 };
 
-export const getOrderDetails = async (req, res) => {
-  const { id_pedido } = req.body;
-  const empresa_id = req.user.empresa_id;
-
-  try {
-    if (!empresa_id || !id_pedido) {
-      return res.status(400).json({
-        message: 'Parámetros incompletos',
-      });
-    }
-
-    console.log('Ejecutando Listar Pedido Detalle.');
-    console.log('----------------------------------------');
-
-    const pedidos = await getPedidoDetalle(empresa_id, id_pedido);
-
-    if (!pedidos) {
-      return res.json({
-        message: 'Detalles del Pedidos no encontrados.',
-      });
-    }
-
-    console.log('Detalles del pedido listado.');
-    // console.log('Mesas:', mesas['data']);
-    console.log('----------------------------------------');
-    return res.json(
-      pedidos.response
-    );
-
-  } catch (error) {
-    console.error(error.message);
-    console.log('----------------------------------------');
-    return res.status(401).json({
-      message: error.message
-    });
-  }
-};
-
-export const newOrder = async (req, res) => {
-  const { dataPedido } = req.body;
+export const newBooking = async (req, res) => {
+  const { dataReserva } = req.body;
   const idUsuario = req.user.id;
   const empresa_id = req.user.empresa_id;
 
-  console.log('Ejecutando Crear Pedido.');
+  console.log('Ejecutando Crear Reserva.');
   console.log('----------------------------------------');
 
   try {
-    if (!empresa_id || !idUsuario || !dataPedido) {
+    if (!empresa_id || !idUsuario || !dataReserva) {
       return res.status(400).json({
         message: 'Parámetros incompletos',
       });
     }
 
-    const data = await newPedido(empresa_id, idUsuario, dataPedido);
+    const data = await newReserva(empresa_id, idUsuario, dataReserva);
 
     if (!data) {
       return res.json({
-        message: 'Error al crear el Pedido.',
+        message: 'Error al crear la Reserva.',
       });
     }
 
-    console.log('Pedido registrado con exito.')
+    console.log('Reserva registrada con exito.')
     console.log('----------------------------------------');
     return res.json(
       data.response
